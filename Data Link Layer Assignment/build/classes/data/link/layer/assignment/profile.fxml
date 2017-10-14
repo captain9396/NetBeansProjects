@@ -36,10 +36,10 @@
                            <children>
                               <ScrollPane layoutX="-8.0" layoutY="-5.0" prefHeight="380.0" prefWidth="609.0">
                                  <content>
-                                    <TableView fx:id="pendingTableView" prefHeight="382.0" prefWidth="616.0">
+                                    <TableView fx:id="pendingTableView" prefHeight="375.0" prefWidth="608.0">
                                       <columns>
-                                        <TableColumn fx:id="fileid" prefWidth="137.0" text="File ID" />
-                                        <TableColumn fx:id="filename" prefWidth="164.0" text="File Name" />
+                                        <TableColumn fx:id="fileid" prefWidth="133.0" text="File ID" />
+                                        <TableColumn fx:id="filename" prefWidth="168.0" text="File Name" />
                                           <TableColumn fx:id="filesize" minWidth="0.0" prefWidth="138.0" text="Size" />
                                           <TableColumn fx:id="sender" prefWidth="156.0" text="Sender" />
                                       </columns>

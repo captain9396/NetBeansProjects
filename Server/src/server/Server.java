@@ -134,7 +134,7 @@ class ServerThread implements Runnable{
                                             int len = Integer.parseInt(din.readUTF());
                                             byte[] arr = new byte[len];
                                             int rec = inputStream.read(arr);
-                                            dout.writeUTF("<chunk " + (i + 1) + " uploaded to server for USER = " + receiver + ">\n");
+                                            dout.writeUTF("< chunk " + (i + 1) + " uploaded to server for USER = " + receiver + " >\n");
                                             String timeout = din.readUTF();
                                             if(timeout.equalsIgnoreCase("yes")){
                                                 chunks.clear();
@@ -228,24 +228,49 @@ class ReceiverThread implements Runnable{
     public void run(){
         try{
             while(true){
-                String id = din.readUTF();
+                String msg = din.readUTF();
+                System.out.println(msg);
                 
-                if(id.equals("logout")){
+                
+                if(msg.equals("logout")){
                     break;
                 }
-                else{
+                else if(msg.equals("showlist")){
+                    String id = din.readUTF();
                     Set<Integer> pendingFileid = serverStorage.getPendingFileId(id);
                     FileInfo info;
                     for(Integer x: pendingFileid){
                         info = serverStorage.getFileInfo(x);
-                        dout.writeUTF(info.getFileId());
-                        dout.writeUTF(info.getFileName());
-                        dout.writeUTF(info.getSenderId());
-                        dout.writeUTF(info.getReceiverId());
-                        dout.writeUTF(String.valueOf(info.getFileSize()));
+                        dout.writeUTF("info");
+                        dout.writeUTF("            "+ info.getFileId());
+                        dout.writeUTF("            "+info.getFileName());
+                        dout.writeUTF("            "+String.valueOf(info.getFileSize()));
+                        dout.writeUTF("            "+info.getSenderId());
                         
                     }
                     dout.writeUTF("done");
+                }
+                else if(msg.equals("receive")){
+//                    String fileid = din.readUTF();
+//                    
+//                    FileInfo info = serverStorage.getFileData(Integer.parseInt(fileid));
+//                    dout.writeUTF(info.getFileName());
+//                    Queue<byte[]> chunks = info.getFile();
+//                    int totalChunks = chunks.size();
+//                    dout.writeUTF(String.valueOf(chunks.size()));
+//                    
+//
+//
+//                    for (int i = 0; i < totalChunks; i++) {
+//                        byte[] fileChunk = chunks.poll();
+//                        serverStorage.setCurrentSize(serverStorage.getCurrentSize() + fileChunk.length);
+//                        dout.writeUTF(String.valueOf(fileChunk.length));
+//                        outputStream.write(fileChunk);
+//                        outputStream.flush();
+//                        dout.writeUTF("< chunk " + (i + 1) + " from USER " + info.getSenderId() + " downloaded >\n");
+//                    
+//                    }
+//                    serverStorage.deleteSpecificFileofaReceiver(info.getReceiverId(), Integer.parseInt(fileid));
                 }
             }
         }catch(Exception e){
@@ -351,6 +376,7 @@ class ServerStorage{
     private int currentSize;
     private static int totalFiles;
     private static int fileID;
+    private final String SERVER_STORAGE_LOCATION = "C:\\Users\\User\\Documents\\NetBeansProjects\\Server\\STORAGE";
     
     
     private ServerStorage(){
@@ -361,6 +387,8 @@ class ServerStorage{
         passwordtable = new Hashtable<>();
         allFiles = new Hashtable<>();
         userFileIds = new Hashtable<>();
+        
+        
         
         for(int i = 1;  i<= 122 ;i++){
             activeUsers.put(String.valueOf(i), false);
@@ -377,6 +405,10 @@ class ServerStorage{
         fileID++;
     }
     
+    public static FileInfo getFileData(int id){
+        return allFiles.get(id);
+    }
+    
     public static void deleteSpecificFileofaReceiver(String id, int fileId){
         userFileIds.get(id).remove(fileId);
         allFiles.remove(fileId);
@@ -386,6 +418,9 @@ class ServerStorage{
     public static Set<Integer> getPendingFileId(String id){
         return userFileIds.get(id);
     }
+    
+    
+    
 
     public static void deleteFile(int fileId ){
         allFiles.remove( fileId);

@@ -1,11 +1,15 @@
 package data.link.layer.assignment;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -15,6 +19,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -29,6 +34,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 /**
@@ -79,7 +85,7 @@ public class profileController implements Initializable {
         filename.setCellValueFactory(new PropertyValueFactory("fileName"));
         filesize.setCellValueFactory(new PropertyValueFactory("fileSize"));
         sender.setCellValueFactory(new PropertyValueFactory("sender"));
-        pendingTableView.setItems(getRow());
+        
 
         
         
@@ -88,17 +94,89 @@ public class profileController implements Initializable {
             public void changed(ObservableValue<? extends Tab> observable, Tab oldValue, Tab newValue) {
                 if(newValue.getText().equals("My Files")){
                     try {
-                        MessagingTools.rout.writeUTF(MessagingTools.username);
-                        String msg = MessagingTools.rin.readUTF();
-                        while(!msg.equals("done")){
-                            System.out.println(msg);
-                            msg = MessagingTools.rin.readUTF();
-                        }
                         
+                        ArrayList<TableRows>tt = new ArrayList<>();
+                        
+                        MessagingTools.rout.writeUTF("showlist");
+                        MessagingTools.rout.writeUTF(MessagingTools.username);
+                        String id, name, size, sender, msg;
+                        while(true){
+                            
+                            msg = MessagingTools.rin.readUTF();
+                            if(msg.equals("done")) break;
+                            id = MessagingTools.rin.readUTF();
+                            name = MessagingTools.rin.readUTF();
+                            size = MessagingTools.rin.readUTF();
+                            sender = MessagingTools.rin.readUTF();
+                            tt.add(new TableRows(id, name, size, sender));
+                        }
+                        pendingTableView.setItems(getRow(tt));
                     } catch (Exception e) {}
                 }
             }
         });
+        
+        
+        
+        
+        pendingTableView.setOnMousePressed(new EventHandler<MouseEvent>() {
+                @Override 
+                public void handle(MouseEvent event) {
+                    try {
+                        if (event.getClickCount() == 1) {  // ACCEPT THE FILE 
+                            TableRows row;
+                            row = pendingTableView.getSelectionModel().getSelectedItem();
+                            
+                            String fileid = row.getFileId().trim();
+                            MessagingTools.rout.writeUTF("receive");
+//                            MessagingTools .rout.writeUTF(fileid);
+//                            String filename = MessagingTools.rin.readUTF();
+//                            InputStream objectInputStream = MessagingTools.rSocket.getInputStream();
+//                            int totalChunks = Integer.parseInt(MessagingTools.rin.readUTF());
+//                            
+//                            ArrayList<byte[]> fileChunks = new ArrayList<>();
+//
+//                            for (int i = 0; i < totalChunks; i++) {
+//                                int len = Integer.parseInt(MessagingTools.rin.readUTF());
+//                                byte[] arr = new byte[len];
+//                                int xx = objectInputStream.read(arr);
+//                                fileChunks.add(arr);
+//                                myConsole.appendText(MessagingTools.rin.readUTF());
+//                            }
+//
+//
+//                            ArrayList byteAlist = new ArrayList<>();
+//                            for (int i = 0; i < totalChunks; i++) {
+//                                byte[] bar = fileChunks.get(i);
+//                                for (int j = 0; j < bar.length; j++) {
+//                                    byteAlist.add(bar[j]);
+//
+//                                }
+//                            }
+//
+//                            byte[] wholeFileAsByteArray = new byte[byteAlist.size()];
+//
+//
+//                            for (int i = 0; i < byteAlist.size(); i++) {
+//                                wholeFileAsByteArray[i] = (byte) byteAlist.get(i);
+//                            }
+//
+//                            FileOutputStream fileOutputStream = new FileOutputStream("C:\\Users\\User\\Documents"
+//                                    + "\\NetBeansProjects\\Server\\STORAGE\\RECEIVER\\" + filename);
+//
+//                            fileOutputStream.write(wholeFileAsByteArray);
+//
+//
+//                            fileOutputStream.close();
+//                            objectInputStream.close();
+//                            return;
+                        }
+                        else{                       // REJECT THE FILE
+                               return;
+                        }
+                    } catch (Exception e) {}
+                }
+            });
         
     }    
     
@@ -203,12 +281,13 @@ public class profileController implements Initializable {
     
     
     
-    public  ObservableList<TableRows> getRow( ){
+    public  ObservableList<TableRows> getRow(ArrayList<TableRows> tt ){
             ObservableList<TableRows> tableRows = FXCollections.observableArrayList();
-            tableRows.add(new TableRows("ab","ab","ab","ab" ));
-            tableRows.add(new TableRows("ab","ab","ab","ab" ));
-            tableRows.add(new TableRows("ab","ab","ab","ab" ));
-            tableRows.add(new TableRows("ab","ab","ab","ab" ));
+            
+            for(TableRows t: tt){
+                tableRows.add(t);
+            }
+            
             return tableRows;
     }
     
