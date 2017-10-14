@@ -251,6 +251,8 @@ class ReceiverThread implements Runnable{
                     dout.writeUTF("done");
                 }
                 else if(msg.equals("receive")){
+                    
+                    System.out.println("here");
 //                    String fileid = din.readUTF();
 //                    
 //                    FileInfo info = serverStorage.getFileData(Integer.parseInt(fileid));
