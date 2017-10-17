@@ -129,50 +129,50 @@ public class profileController implements Initializable {
                             
                             String fileid = row.getFileId().trim();
                             MessagingTools.rout.writeUTF("receive");
-//                            MessagingTools .rout.writeUTF(fileid);
-//                            String filename = MessagingTools.rin.readUTF();
-//                            InputStream objectInputStream = MessagingTools.rSocket.getInputStream();
-//                            int totalChunks = Integer.parseInt(MessagingTools.rin.readUTF());
-//                            
-//                            ArrayList<byte[]> fileChunks = new ArrayList<>();
-//
-//                            for (int i = 0; i < totalChunks; i++) {
-//                                int len = Integer.parseInt(MessagingTools.rin.readUTF());
-//                                byte[] arr = new byte[len];
-//                                int xx = objectInputStream.read(arr);
-//                                fileChunks.add(arr);
-//                                myConsole.appendText(MessagingTools.rin.readUTF());
-//                            }
-//
-//
-//                            ArrayList byteAlist = new ArrayList<>();
-//                            for (int i = 0; i < totalChunks; i++) {
-//                                byte[] bar = fileChunks.get(i);
-//                                for (int j = 0; j < bar.length; j++) {
-//                                    byteAlist.add(bar[j]);
-//
-//                                }
-//                            }
-//
-//                            byte[] wholeFileAsByteArray = new byte[byteAlist.size()];
-//
-//
-//                            for (int i = 0; i < byteAlist.size(); i++) {
-//                                wholeFileAsByteArray[i] = (byte) byteAlist.get(i);
-//                            }
-//
-//                            FileOutputStream fileOutputStream = new FileOutputStream("C:\\Users\\User\\Documents"
-//                                    + "\\NetBeansProjects\\Server\\STORAGE\\RECEIVER\\" + filename);
-//
-//                            fileOutputStream.write(wholeFileAsByteArray);
-//
-//
-//                            fileOutputStream.close();
-//                            objectInputStream.close();
+                            MessagingTools .rout.writeUTF(fileid);
+                            String filename = MessagingTools.rin.readUTF();
+                            InputStream objectInputStream = MessagingTools.rSocket.getInputStream();
+                            int totalChunks = Integer.parseInt(MessagingTools.rin.readUTF());
+                            
+                            ArrayList<byte[]> fileChunks = new ArrayList<>();
+
+                            for (int i = 0; i < totalChunks; i++) {
+                                int len = Integer.parseInt(MessagingTools.rin.readUTF());
+                                byte[] arr = new byte[len];
+                                int xx = objectInputStream.read(arr);
+                                fileChunks.add(arr);
+                                myConsole.appendText(MessagingTools.rin.readUTF());
+                            }
+
+
+                            ArrayList byteAlist = new ArrayList<>();
+                            for (int i = 0; i < totalChunks; i++) {
+                                byte[] bar = fileChunks.get(i);
+                                for (int j = 0; j < bar.length; j++) {
+                                    byteAlist.add(bar[j]);
+
+                                }
+                            }
+
+                            byte[] wholeFileAsByteArray = new byte[byteAlist.size()];
+
+
+                            for (int i = 0; i < byteAlist.size(); i++) {
+                                wholeFileAsByteArray[i] = (byte) byteAlist.get(i);
+                            }
+
+                            FileOutputStream fileOutputStream = new FileOutputStream("G:\\10101010101010\\L3T2\\Com"
+                                    + "puter Networks Sessional\\Assignment_1\\files\\receiver\\" + filename);
+
+                            fileOutputStream.write(wholeFileAsByteArray);
+
+
+                            fileOutputStream.close();
+                            objectInputStream.close();
 //                            return;
                         }
                         else{                       // REJECT THE FILE
-                               return;
+//                               return;
                         }
                     } catch (Exception e) {}
                 }
@@ -184,10 +184,10 @@ public class profileController implements Initializable {
 
 
     @FXML
-    private void handleButtonAction(ActionEvent event) throws IOException {
+    private void handleButtonAction(ActionEvent event) {
         
         if(event.getSource() == logoutButton){
-            
+            try{
             System.out.println("logged out");
             Stage stage = (Stage)logoutButton.getScene().getWindow();
             Parent root = FXMLLoader.load(getClass().getResource("login.fxml"));
@@ -195,17 +195,24 @@ public class profileController implements Initializable {
             stage.show();
             
             MessagingTools.dout.writeUTF("logout");
+            MessagingTools.rout.writeUTF("logout");
             MessagingTools.din.close();
             MessagingTools.dout.close();
             MessagingTools.socket.close();
-            MessagingTools.rout.writeUTF("logout");
-            MessagingTools.rin.close();
+
+            
             MessagingTools.rout.close();
+            MessagingTools.rin.close();
             MessagingTools.rSocket.close();
+            }catch(Exception e){
+                System.out.println("exception here 1");
+//                e.printStackTrace();
+            }
 
         }
+        
         else if(event.getSource() == sendfileButton){
-            
+            try{
             MessagingTools.dout.writeUTF("sendfile");
             
             String receiver = receiverText.getText();
@@ -275,6 +282,7 @@ public class profileController implements Initializable {
                     myConsole.appendText(MessagingTools.din.readUTF() + "\n");
                 }
             }
+            }catch(Exception e){}
         }
     }
     

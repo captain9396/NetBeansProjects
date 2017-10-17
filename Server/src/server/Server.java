@@ -253,26 +253,26 @@ class ReceiverThread implements Runnable{
                 else if(msg.equals("receive")){
                     
                     System.out.println("here");
-//                    String fileid = din.readUTF();
-//                    
-//                    FileInfo info = serverStorage.getFileData(Integer.parseInt(fileid));
-//                    dout.writeUTF(info.getFileName());
-//                    Queue<byte[]> chunks = info.getFile();
-//                    int totalChunks = chunks.size();
-//                    dout.writeUTF(String.valueOf(chunks.size()));
-//                    
-//
-//
-//                    for (int i = 0; i < totalChunks; i++) {
-//                        byte[] fileChunk = chunks.poll();
-//                        serverStorage.setCurrentSize(serverStorage.getCurrentSize() + fileChunk.length);
-//                        dout.writeUTF(String.valueOf(fileChunk.length));
-//                        outputStream.write(fileChunk);
-//                        outputStream.flush();
-//                        dout.writeUTF("< chunk " + (i + 1) + " from USER " + info.getSenderId() + " downloaded >\n");
-//                    
-//                    }
-//                    serverStorage.deleteSpecificFileofaReceiver(info.getReceiverId(), Integer.parseInt(fileid));
+                    String fileid = din.readUTF();
+                    
+                    FileInfo info = serverStorage.getFileData(Integer.parseInt(fileid));
+                    dout.writeUTF(info.getFileName());
+                    Queue<byte[]> chunks = info.getFile();
+                    int totalChunks = chunks.size();
+                    dout.writeUTF(String.valueOf(chunks.size()));
+                    
+
+
+                    for (int i = 0; i < totalChunks; i++) {
+                        byte[] fileChunk = chunks.poll();
+                        serverStorage.setCurrentSize(serverStorage.getCurrentSize() + fileChunk.length);
+                        dout.writeUTF(String.valueOf(fileChunk.length));
+                        outputStream.write(fileChunk);
+                        outputStream.flush();
+                        dout.writeUTF("< chunk " + (i + 1) + " from USER " + info.getSenderId() + " downloaded >\n");
+                    
+                    }
+                    serverStorage.deleteSpecificFileofaReceiver(info.getReceiverId(), Integer.parseInt(fileid));
                 }
             }
         }catch(Exception e){
@@ -303,12 +303,11 @@ class ReceiverThread implements Runnable{
 
 
 public class Server {
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args){
         ServerStorage serverStorage = ServerStorage.getInstance();
         
-        new Thread(){
-            
         
+        new Thread(){
             @Override
             public void run() {
                 ServerSocket serverSocket=null;
@@ -327,9 +326,8 @@ public class Server {
                     }
                     System.out.println("SEND TO SERVER THREAD ON");
                 }
-                
-        
-        }}.start();
+            }
+        }.start();
         
         
         
