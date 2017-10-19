@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,6 +36,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 /**
@@ -59,6 +61,9 @@ public class profileController implements Initializable {
     Button logoutButton;
     
     @FXML
+    Button browseFile;
+    
+    @FXML
     Tab myFilesTab;
     @FXML
     TabPane tabs;
@@ -73,6 +78,8 @@ public class profileController implements Initializable {
     TableColumn filesize;
     @FXML
     TableColumn sender;
+    
+    final FileChooser fileChooser = new FileChooser();
     
     
     /**
@@ -284,10 +291,26 @@ public class profileController implements Initializable {
             }
             }catch(Exception e){}
         }
+        else if(event.getSource() == browseFile){
+            
+            fileText.clear();
+            File file = fileChooser.showOpenDialog((Stage)logoutButton.getScene().getWindow());
+                if (file != null) {
+                    List<File> files = Arrays.asList(file);
+                    printLog(fileText, files);
+                }
+        }
     }
     
     
-    
+    private void printLog(TextField textArea, List<File> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        for (File file : files) {
+            textArea.appendText(file.getAbsolutePath() + "\n");
+        }
+    }
     
     public  ObservableList<TableRows> getRow(ArrayList<TableRows> tt ){
             ObservableList<TableRows> tableRows = FXCollections.observableArrayList();
