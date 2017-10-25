@@ -108,4 +108,5 @@ class MessagingTools{
     static DataInputStream din, rin;
     static DataOutputStream dout, rout;
     static String username;
+    static String fileid;
 }

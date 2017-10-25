@@ -23,7 +23,10 @@
                               <TextField fx:id="receiverText" layoutX="226.0" layoutY="14.0" />
                               <Label layoutX="149.0" layoutY="47.0" text="Selected File" />
                               <Label layoutX="149.0" layoutY="18.0" text="Receiver Id" />
-                              <TextArea fx:id="myConsole" layoutX="11.0" layoutY="134.0" prefHeight="225.0" prefWidth="580.0" />
+                              <TextArea fx:id="myConsole" layoutX="11.0" layoutY="134.0" prefHeight="225.0" prefWidth="580.0">
+                                 <font>
+                                    <Font name="Consolas" size="12.0" />
+                                 </font></TextArea>
                               <Label fx:id="receiveLabel" layoutX="221.0" layoutY="106.0" prefHeight="17.0" prefWidth="160.0" textFill="#fc1111" />
                               <Button fx:id="logoutButton" layoutX="510.0" mnemonicParsing="false" onAction="#handleButtonAction" prefHeight="28.0" prefWidth="91.0" text="Log Out" />
                               <Button fx:id="browseFile" layoutX="381.0" layoutY="43.0" mnemonicParsing="false" onAction="#handleButtonAction" text="Browse" />
@@ -35,9 +38,9 @@
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <ScrollPane layoutX="-8.0" layoutY="-5.0" prefHeight="380.0" prefWidth="609.0">
+                              <ScrollPane layoutX="-8.0" layoutY="-5.0" prefHeight="321.0" prefWidth="609.0">
                                  <content>
-                                    <TableView fx:id="pendingTableView" prefHeight="375.0" prefWidth="608.0">
+                                    <TableView fx:id="pendingTableView" prefHeight="320.0" prefWidth="608.0">
                                       <columns>
                                         <TableColumn fx:id="fileid" prefWidth="133.0" text="File ID" />
                                         <TableColumn fx:id="filename" prefWidth="168.0" text="File Name" />
@@ -47,6 +50,8 @@
                                     </TableView>
                                  </content>
                               </ScrollPane>
+                              <Button fx:id="acceptButton" disable="true" layoutX="223.0" layoutY="328.0" mnemonicParsing="false" onAction="#handleButtonAction" text="Accept" />
+                              <Button fx:id="declineButton" disable="true" layoutX="329.0" layoutY="328.0" mnemonicParsing="false" onAction="#handleButtonAction" text="Decline" />
                            </children></AnchorPane>
                   </content>
                 </Tab>

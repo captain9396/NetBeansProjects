@@ -8,11 +8,15 @@ package server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -124,9 +128,15 @@ class ServerThread implements Runnable{
 
                                     serverStorage.setCurrentSize(serverStorage.getCurrentSize() - sizeOfFileToBeReceived);
 
-
-
-                                    Queue<byte[]> chunks = new LinkedList<>();
+                                    
+                                    String serverStorageLocation = serverStorage.getServerStorageLocation();
+                                    String chunksLocation = serverStorageLocation + "\\FILE"
+                                            + String.valueOf(fileId) + "x";
+                                    File folder = new File(chunksLocation);
+                                    folder.mkdir();
+                                    
+                                    
+                                    
                                     int tot = 0 ;
                                     boolean istimeout = false;
                                     try {
@@ -134,22 +144,27 @@ class ServerThread implements Runnable{
                                             int len = Integer.parseInt(din.readUTF());
                                             byte[] arr = new byte[len];
                                             int rec = inputStream.read(arr);
-                                            dout.writeUTF("< chunk " + (i + 1) + " uploaded to server for USER = " + receiver + " >\n");
+                                            dout.writeUTF("< chunk " + (i + 1) + " uploaded to server for USER "
+                                                    + "= " + receiver + " >\n");
                                             String timeout = din.readUTF();
                                             if(timeout.equalsIgnoreCase("yes")){
-                                                chunks.clear();
+                                                deleteDirectory(chunksLocation);
                                                 istimeout = true;
                                                 break;
                                             }
-                                            chunks.add(arr);
+                                            FileOutputStream fStream = new FileOutputStream(chunksLocation
+                                                    + "\\" + "CHUNK_" + String.valueOf(i) );
+                                            fStream.write(arr);
+                                            fStream.close();
                                             tot += arr.length;
                                         }
                                         if(istimeout){
+                                            deleteDirectory(chunksLocation);
                                             dout.writeUTF("----------- TIMEOUT ------------\n");
                                             continue;
                                         }
                                     }catch (Exception e){
-                                        chunks.clear();
+                                        deleteDirectory(chunksLocation);
                                         serverStorage.setOffline(username);
                                         break;
                                     }
@@ -157,11 +172,14 @@ class ServerThread implements Runnable{
                                     
                                     
                                     if(tot == sizeOfFileToBeReceived){
-                                        serverStorage.addFile(fileId , new FileInfo(String.valueOf(fileId),username ,receiver ,tot , fileName, chunks ), receiver);
-                                        dout.writeUTF("-------------- FILE SUCCESSFULLY UPLOADED --------------\n");  
+                                        serverStorage.addFile(fileId , new FileInfo(String.valueOf(fileId),
+                                                username ,receiver , tot, fileName, totalChunks, chunkSize), receiver);
+                                        dout.writeUTF("-------------- FILE SUCCESSFULLY UPLOADED --------------\n"); 
+                                        
+                                        
                                     }else{
                                         dout.writeUTF("-------------- UPLOAD FAILURE --------------\n");
-                                        chunks.clear();
+                                        deleteDirectory(chunksLocation);
                                     }
 
                                 }
@@ -189,6 +207,15 @@ class ServerThread implements Runnable{
             dout.close();
             socket.close();
         }catch(Exception e){}
+    }
+    
+    public void deleteDirectory(String location){
+        File folder = new File(location);
+        File[] list = folder.listFiles();
+        for(File f : list) {
+            f.delete();
+        }
+        folder.delete();
     }
 }
 
@@ -238,6 +265,10 @@ class ReceiverThread implements Runnable{
                 else if(msg.equals("showlist")){
                     String id = din.readUTF();
                     Set<Integer> pendingFileid = serverStorage.getPendingFileId(id);
+                    
+                    System.out.print("CLIENT REQUESTS TO SEE FILE IDS: ");
+                    serverStorage.showFileIDS(id);
+                    
                     FileInfo info;
                     for(Integer x: pendingFileid){
                         info = serverStorage.getFileInfo(x);
@@ -252,19 +283,27 @@ class ReceiverThread implements Runnable{
                 }
                 else if(msg.equals("receive")){
                     
-                    System.out.println("here");
+                   
                     String fileid = din.readUTF();
                     
                     FileInfo info = serverStorage.getFileData(Integer.parseInt(fileid));
                     dout.writeUTF(info.getFileName());
-                    Queue<byte[]> chunks = info.getFile();
-                    int totalChunks = chunks.size();
-                    dout.writeUTF(String.valueOf(chunks.size()));
                     
-
-
+                    int totalChunks = info.getTotalChunks();
+                    dout.writeUTF(String.valueOf(totalChunks));
+                    int baseChunkSize = info.getChunkSize();  
+                    String sendingFileLocation = serverStorage.getServerStorageLocation()
+                            + "\\FILE" + info.getFileId() + "x";
+                    
+                    
                     for (int i = 0; i < totalChunks; i++) {
-                        byte[] fileChunk = chunks.poll();
+                        
+                        
+                        byte[] fileChunk = Files.readAllBytes(Paths.get( sendingFileLocation 
+                                + "\\CHUNK_" + String.valueOf(i) ));
+                        
+                        
+                        
                         serverStorage.setCurrentSize(serverStorage.getCurrentSize() + fileChunk.length);
                         dout.writeUTF(String.valueOf(fileChunk.length));
                         outputStream.write(fileChunk);
@@ -272,7 +311,20 @@ class ReceiverThread implements Runnable{
                         dout.writeUTF("< chunk " + (i + 1) + " from USER " + info.getSenderId() + " downloaded >\n");
                     
                     }
+                    
+                    
                     serverStorage.deleteSpecificFileofaReceiver(info.getReceiverId(), Integer.parseInt(fileid));
+                    deleteDirectory(sendingFileLocation);
+                }
+                else if(msg.equals("decline")){
+                    String fileid = din.readUTF();
+                    FileInfo info = serverStorage.getFileData(Integer.parseInt(fileid));
+                    serverStorage.deleteSpecificFileofaReceiver(info.getReceiverId(), Integer.parseInt(fileid));
+                    String sendingFileLocation = serverStorage.getServerStorageLocation()
+                            + "\\FILE" + info.getFileId() + "x";
+                    System.out.println(sendingFileLocation);
+                    deleteDirectory(sendingFileLocation);
+                    dout.writeUTF("deleted");
                 }
             }
         }catch(Exception e){
@@ -290,6 +342,15 @@ class ReceiverThread implements Runnable{
         }
         
     }
+    
+    private void deleteDirectory(String location){
+        File folder = new File(location);
+        File[] list = folder.listFiles();
+        for(File f : list) {
+            f.delete();
+        }
+        folder.delete();
+    }
 }
 
 
@@ -305,7 +366,7 @@ class ReceiverThread implements Runnable{
 public class Server {
     public static void main(String[] args){
         ServerStorage serverStorage = ServerStorage.getInstance();
-        
+        System.out.println("******** SERVER ONLINE **********");
         
         new Thread(){
             @Override
@@ -376,7 +437,8 @@ class ServerStorage{
     private int currentSize;
     private static int totalFiles;
     private static int fileID;
-    private final String SERVER_STORAGE_LOCATION = "C:\\Users\\User\\Documents\\NetBeansProjects\\Server\\STORAGE";
+    private  final String SERVER_STORAGE_LOCATION = "G:\\10101010101010\\L3T2\\Compu"
+            + "ter Networks Sessional\\Assignment_1\\files\\SERVER_STORAGE";
     
     
     private ServerStorage(){
@@ -412,6 +474,13 @@ class ServerStorage{
     public static void deleteSpecificFileofaReceiver(String id, int fileId){
         userFileIds.get(id).remove(fileId);
         allFiles.remove(fileId);
+    }
+    
+    public static void showFileIDS(String id){
+        for(Integer x: userFileIds.get(id)){
+            System.out.print(x + " ");
+        }
+        System.out.println("");
     }
     
     
@@ -468,6 +537,10 @@ class ServerStorage{
         return passwordtable.get(id);
                 
     }
+    
+    public  String getServerStorageLocation(){
+        return SERVER_STORAGE_LOCATION;
+    }
 }
 
 
@@ -482,7 +555,9 @@ class FileInfo{
     private String receiverId;
     private int fileSize;
     private String fileName;
-    private Queue<byte[]> chunks;
+    private int totalChunks;
+    private int chunkSize;
+   
     
     public String getFileId() {
         return fileId;
@@ -514,17 +589,27 @@ class FileInfo{
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
-    
-    public Queue<byte[]> getFile(){
-        return chunks;
+
+    public int getTotalChunks() {
+        return totalChunks;
     }
-    public FileInfo(String fileId, String senderId, String receiverId, int fileSize, String fileName, Queue<byte[]> chunks) {
+
+    public int getChunkSize() {
+        return chunkSize;
+    }
+    
+    
+    
+    
+  
+    public FileInfo(String fileId, String senderId, String receiverId, int fileSize, String fileName, int totalChunks, int chunkSize) {
 
         this.fileId = fileId;
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.fileSize = fileSize;
         this.fileName = fileName;
-        this.chunks = chunks;
+        this.totalChunks = totalChunks;
+        this.chunkSize = chunkSize;
     }
 }

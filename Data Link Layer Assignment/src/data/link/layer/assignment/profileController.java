@@ -64,6 +64,11 @@ public class profileController implements Initializable {
     Button browseFile;
     
     @FXML
+    Button acceptButton;
+    @FXML
+    Button declineButton;
+    
+    @FXML
     Tab myFilesTab;
     @FXML
     TabPane tabs;
@@ -80,8 +85,7 @@ public class profileController implements Initializable {
     TableColumn sender;
     
     final FileChooser fileChooser = new FileChooser();
-    
-    
+  
     /**
      * Initializes the controller class.
      */
@@ -130,57 +134,14 @@ public class profileController implements Initializable {
                 @Override 
                 public void handle(MouseEvent event) {
                     try {
-                        if (event.getClickCount() == 1) {  // ACCEPT THE FILE 
+                        if (event.getClickCount()> 0) {  // ACCEPT THE FILE 
                             TableRows row;
                             row = pendingTableView.getSelectionModel().getSelectedItem();
-                            
-                            String fileid = row.getFileId().trim();
-                            MessagingTools.rout.writeUTF("receive");
-                            MessagingTools .rout.writeUTF(fileid);
-                            String filename = MessagingTools.rin.readUTF();
-                            InputStream objectInputStream = MessagingTools.rSocket.getInputStream();
-                            int totalChunks = Integer.parseInt(MessagingTools.rin.readUTF());
-                            
-                            ArrayList<byte[]> fileChunks = new ArrayList<>();
-
-                            for (int i = 0; i < totalChunks; i++) {
-                                int len = Integer.parseInt(MessagingTools.rin.readUTF());
-                                byte[] arr = new byte[len];
-                                int xx = objectInputStream.read(arr);
-                                fileChunks.add(arr);
-                                myConsole.appendText(MessagingTools.rin.readUTF());
-                            }
-
-
-                            ArrayList byteAlist = new ArrayList<>();
-                            for (int i = 0; i < totalChunks; i++) {
-                                byte[] bar = fileChunks.get(i);
-                                for (int j = 0; j < bar.length; j++) {
-                                    byteAlist.add(bar[j]);
-
-                                }
-                            }
-
-                            byte[] wholeFileAsByteArray = new byte[byteAlist.size()];
-
-
-                            for (int i = 0; i < byteAlist.size(); i++) {
-                                wholeFileAsByteArray[i] = (byte) byteAlist.get(i);
-                            }
-
-                            FileOutputStream fileOutputStream = new FileOutputStream("G:\\10101010101010\\L3T2\\Com"
-                                    + "puter Networks Sessional\\Assignment_1\\files\\receiver\\" + filename);
-
-                            fileOutputStream.write(wholeFileAsByteArray);
-
-
-                            fileOutputStream.close();
-                            objectInputStream.close();
-//                            return;
+                            MessagingTools.fileid = row.getFileId().trim();
+                            acceptButton.setDisable(false);
+                            declineButton.setDisable(false);
                         }
-                        else{                       // REJECT THE FILE
-//                               return;
-                        }
+                        
                     } catch (Exception e) {}
                 }
             });
@@ -212,8 +173,7 @@ public class profileController implements Initializable {
             MessagingTools.rin.close();
             MessagingTools.rSocket.close();
             }catch(Exception e){
-                System.out.println("exception here 1");
-//                e.printStackTrace();
+            
             }
 
         }
@@ -224,13 +184,23 @@ public class profileController implements Initializable {
             
             String receiver = receiverText.getText();
             String fileLocation = fileText.getText();
+            if(receiver.equals("")){
+                receiveLabel.setText("please enter a valid receiver id");
+                return ;
+            }
+            if(fileLocation.equals("")){
+                receiveLabel.setText("please enter a file location");
+                return ;
+            }
             
             MessagingTools.dout.writeUTF(receiver);
             String confirm = MessagingTools.din.readUTF();
             
             if(confirm.equals("no")){
                 receiveLabel.setText("receiver is not online try later");
-            }else{
+            }
+            
+            else{
                 receiveLabel.setText("");
                 System.out.println(fileLocation);
                 File senderFile = new File(fileLocation);
@@ -299,6 +269,90 @@ public class profileController implements Initializable {
                     List<File> files = Arrays.asList(file);
                     printLog(fileText, files);
                 }
+        }
+        else if(event.getSource() == acceptButton){
+          
+            try{
+                acceptButton.setDisable(true);
+                declineButton.setDisable(true);
+                MessagingTools.rout.writeUTF("receive");
+                MessagingTools .rout.writeUTF(MessagingTools.fileid);
+            
+
+                String filename = MessagingTools.rin.readUTF();
+                InputStream objectInputStream = MessagingTools.rSocket.getInputStream();
+                int totalChunks = Integer.parseInt(MessagingTools.rin.readUTF());
+
+                System.out.println("TOTAL CHUXXX = " + totalChunks);
+
+
+                FileOutputStream fileOutputStream = new FileOutputStream("G:\\10101010101010\\L3T2\\Com"
+                        + "puter Networks Sessional\\Assignment_1\\files\\receiver\\" + filename, true);
+
+                for (int i = 0; i < totalChunks; i++) {
+                    int len = Integer.parseInt(MessagingTools.rin.readUTF());
+                    byte[] arr = new byte[len];
+                    int xx = objectInputStream.read(arr);
+                    fileOutputStream.write(arr);
+                    myConsole.appendText(MessagingTools.rin.readUTF());
+
+                }
+
+                fileOutputStream.close();
+                
+                
+                // UPDATING THE TABLE VIEW
+                try {
+
+                    ArrayList<TableRows>tt = new ArrayList<>();
+
+                    MessagingTools.rout.writeUTF("showlist");
+                    MessagingTools.rout.writeUTF(MessagingTools.username);
+                    String id, name, size, sender, msg;
+                    while(true){
+
+                        msg = MessagingTools.rin.readUTF();
+                        if(msg.equals("done")) break;
+                        id = MessagingTools.rin.readUTF();
+                        name = MessagingTools.rin.readUTF();
+                        size = MessagingTools.rin.readUTF();
+                        sender = MessagingTools.rin.readUTF();
+                        tt.add(new TableRows(id, name, size, sender));
+                    }
+                    pendingTableView.setItems(getRow(tt));
+                } catch (Exception e) {}
+            }catch(Exception e){
+                
+            }
+        }
+        else if(event.getSource() == declineButton){
+            acceptButton.setDisable(true);
+            declineButton.setDisable(true);
+            try{
+                MessagingTools.rout.writeUTF("decline");
+                MessagingTools .rout.writeUTF(MessagingTools.fileid);
+                System.out.println(MessagingTools.rin.readUTF());
+                
+                
+                // UPDATING THE TABLE VIEW
+                try {
+                    ArrayList<TableRows>tt = new ArrayList<>();
+                    MessagingTools.rout.writeUTF("showlist");
+                    MessagingTools.rout.writeUTF(MessagingTools.username);
+                    String id, name, size, sender, msg;
+                    while(true){
+
+                        msg = MessagingTools.rin.readUTF();
+                        if(msg.equals("done")) break;
+                        id = MessagingTools.rin.readUTF();
+                        name = MessagingTools.rin.readUTF();
+                        size = MessagingTools.rin.readUTF();
+                        sender = MessagingTools.rin.readUTF();
+                        tt.add(new TableRows(id, name, size, sender));
+                    }
+                    pendingTableView.setItems(getRow(tt));
+                } catch (Exception e) {}
+            }catch(Exception e) {}
         }
     }
     
